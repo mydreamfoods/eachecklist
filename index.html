@@ -117,6 +117,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .dd-all{border-bottom:1px solid var(--border);font-weight:600;background:var(--surface2)}
 .dd-foot{display:flex;justify-content:flex-end;gap:8px;padding:8px 10px;border-top:1px solid var(--border);background:var(--surface2)}
 .dd-empty{padding:14px;font-size:12px;color:var(--muted);text-align:center}
+.ts{position:relative}
+.ts-wrap{position:relative}
+.ts-wrap .ti-search{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted2);font-size:14px;pointer-events:none}
+.ts-inp{padding-left:30px;padding-right:28px;min-width:260px}
+.ts-x{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:none;color:var(--muted);cursor:pointer;font-size:15px;display:none;padding:2px 4px}
+.ts-x.show{display:block}
+.ts-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:45;width:420px;max-width:85vw;background:#fff;border:1px solid var(--border2);border-radius:var(--r);box-shadow:0 10px 30px rgba(30,27,75,.18);max-height:340px;overflow-y:auto}
+.ts.open .ts-panel{display:block}
+.ts-row{display:flex;align-items:flex-start;gap:9px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12.5px}
+.ts-row:last-child{border-bottom:none}
+.ts-row:hover,.ts-row.hi{background:var(--accent-lt)}
+.ts-row .id-cell{flex-shrink:0;font-size:10px}
+.ts-txt{flex:1;min-width:0;line-height:1.35}
+.ts-meta{font-size:10.5px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+.ts-st{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.ts-empty{padding:14px;font-size:12px;color:var(--muted);text-align:center}
+.ts-row mark{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
 .fsummary{margin-left:auto;font-size:12px;color:var(--muted);font-family:var(--mono);align-self:center}
 @media(max-width:620px){.fsummary{margin-left:0;width:100%}}
 
@@ -230,6 +247,18 @@ body{padding:0}
   </div>
 
   <div id="fbar" class="fbar" style="display:none">
+    <div class="fgroup">
+      <span class="flabel"><i class="ti ti-list-search"></i>Find Task</span>
+      <div class="ts" id="ts" onclick="event.stopPropagation()">
+        <div class="ts-wrap">
+          <i class="ti ti-search"></i>
+          <input type="text" class="finput ts-inp" id="ts-inp" placeholder="Type or pick a task / ID..." autocomplete="off"
+                 onfocus="openTS()" oninput="onTSInput()" onkeydown="onTSKey(event)">
+          <button type="button" class="ts-x" id="ts-x" onclick="clearTS()" title="Clear"><i class="ti ti-x"></i></button>
+        </div>
+        <div class="ts-panel" id="ts-panel"></div>
+      </div>
+    </div>
     <div class="fgroup">
       <label class="flabel" for="month-sel"><i class="ti ti-calendar-month"></i>Month</label>
       <select class="finput" id="month-sel" onchange="onMonthChange()"></select>
@@ -368,9 +397,26 @@ function processSource(json, src) {
   return Object.values(map).map(t => ({ ...t, ea: src.ea || src.name, status: t.main || t.form || 'pending' }));
 }
 
+// Apps Script URL used when this page runs outside Apps Script (GitHub Pages, local file)
+const API_URL = 'https://script.google.com/macros/s/AKfycbx9-mhF7-nsl6KqY1oQM0ObI1b2AgpJddwXfQbHaZnQRSAvLCHgOLTNBlCNuzbgGyKAGQ/exec';
+
 function fetchAll() {
-  return new Promise((resolve, reject) =>
-    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getAllData());
+  // 1) Served by Apps Script → use google.script.run
+  if (window.google && google.script && google.script.run) {
+    return new Promise((resolve, reject) =>
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getAllData());
+  }
+  // 2) Anywhere else (GitHub) → JSONP to the web app
+  return new Promise((resolve, reject) => {
+    const cb = '__eaCb' + Date.now();
+    const tag = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); reject(new Error('Timeout — check web app access is "Anyone"')); }, 30000);
+    function cleanup() { clearTimeout(timer); delete window[cb]; tag.remove(); }
+    window[cb] = data => { cleanup(); resolve(data); };
+    tag.onerror = () => { cleanup(); reject(new Error('Could not load data — redeploy web app with access "Anyone"')); };
+    tag.src = API_URL + '?view=all&callback=' + cb + '&_=' + Date.now();
+    document.body.appendChild(tag);
+  });
 }
 
 let loading = false;
@@ -427,6 +473,9 @@ function renderSidebar(monthScopedAll) {
 function selectEA(n) {
   currentEA = n;
   selDates.clear();
+  searchText = ''; searchId = '';
+  document.getElementById('ts-inp').value = '';
+  document.getElementById('ts-x').classList.remove('show');
   buildMonthOptions('');                           // reset to this EA's latest month
   document.getElementById('side').classList.remove('open');
   refreshView();
@@ -434,7 +483,72 @@ function selectEA(n) {
 function toggleSide() { document.getElementById('side').classList.toggle('open'); }
 
 // ---------- FILTERS ----------
+// ---------- TASK SEARCH ----------
+let searchText = '', searchId = '', tsHi = -1, tsMatches = [];
+function norm(x) { return String(x || '').toLowerCase(); }
+function matchesSearch(t) {
+  if (searchId) return t.id === searchId;
+  if (!searchText) return true;
+  const hay = norm(t.id + ' ' + t.task + ' ' + t.feedback);
+  return norm(searchText).split(/\s+/).filter(Boolean).every(w => hay.includes(w));
+}
+function searching() { return !!(searchId || searchText); }
+function hl(text) {
+  let out = esc(text);
+  norm(searchText).split(/\s+/).filter(w => w.length > 1).forEach(w => {
+    out = out.replace(new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig'), '<mark>$1</mark>');
+  });
+  return out;
+}
+function renderTSPanel() {
+  const pool = allTasks.filter(t => t.ea === currentEA);
+  tsMatches = (searchText ? pool.filter(matchesSearch) : pool)
+    .slice().sort((a,b) => ((taskDate(b)||0) - (taskDate(a)||0)) || (Number(b.id)||0) - (Number(a.id)||0));
+  const panel = document.getElementById('ts-panel');
+  if (!tsMatches.length) { panel.innerHTML = `<div class="ts-empty">No task found</div>`; return; }
+  panel.innerHTML = tsMatches.slice(0, 60).map((t,i) => {
+    const col = t.status === 'yes' ? 'var(--green)' : t.status === 'no' ? 'var(--amber)' : 'var(--muted2)';
+    const d = taskDate(t);
+    return `<div class="ts-row${i === tsHi ? ' hi' : ''}" onclick="pickTask(${i})">
+      <span class="ts-st" style="background:${col}"></span>
+      <span class="id-cell">${esc(t.id)}</span>
+      <div class="ts-txt">${hl(t.task)}<div class="ts-meta">${d ? safeDate(d) : 'No date'} · ${t.status === 'yes' ? 'Done' : t.status === 'no' ? 'Not done' : 'Pending'}</div></div>
+    </div>`;
+  }).join('') + (tsMatches.length > 60 ? `<div class="ts-empty">+${tsMatches.length - 60} more — keep typing</div>` : '');
+}
+function openTS()  { document.getElementById('ts').classList.add('open'); tsHi = -1; renderTSPanel(); }
+function closeTS() { document.getElementById('ts').classList.remove('open'); }
+function onTSInput() {
+  searchText = document.getElementById('ts-inp').value.trim();
+  searchId = ''; tsHi = -1;
+  document.getElementById('ts-x').classList.toggle('show', !!searchText);
+  openTS(); refreshView();
+}
+function pickTask(i) {
+  const t = tsMatches[i]; if (!t) return;
+  searchId = t.id; searchText = '';
+  document.getElementById('ts-inp').value = (t.id ? '#' + t.id + ' ' : '') + t.task.replace(/\s+/g, ' ');
+  document.getElementById('ts-x').classList.add('show');
+  closeTS(); refreshView();
+}
+function clearTS() {
+  searchText = ''; searchId = '';
+  document.getElementById('ts-inp').value = '';
+  document.getElementById('ts-x').classList.remove('show');
+  closeTS(); refreshView();
+}
+function onTSKey(e) {
+  const n = Math.min(tsMatches.length, 60);
+  if (e.key === 'ArrowDown') { e.preventDefault(); tsHi = (tsHi + 1) % n; renderTSPanel(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); tsHi = (tsHi - 1 + n) % n; renderTSPanel(); }
+  else if (e.key === 'Enter') { e.preventDefault(); if (tsHi >= 0) pickTask(tsHi); else closeTS(); }
+  else if (e.key === 'Escape') { searching() ? clearTS() : closeTS(); }
+  if (tsHi >= 0) { const el = document.querySelectorAll('.ts-row')[tsHi]; if (el) el.scrollIntoView({ block: 'nearest' }); }
+}
+document.addEventListener('click', closeTS);
+
 function inDateScope(t) {
+  if (searching()) return true;                    // search looks across all months/dates
   const month = document.getElementById('month-sel').value;
   const d = taskDate(t);
   if (selDates.size) return d && selDates.has(ymdKey(d));
@@ -474,9 +588,9 @@ function renderDateDropdown(eaTasks) {
     : n === 1 ? fmtKey([...selDates][0]) : n + ' dates selected';
 }
 
-function toggleDate(k)       { selDates.has(k) ? selDates.delete(k) : selDates.add(k); refreshView(); }
-function selectAllDates(on)  { selDates.clear(); if (on) ddKeys.forEach(k => selDates.add(k)); refreshView(); }
-function onMonthChange()     { selDates.clear(); refreshView(); }
+function toggleDate(k)       { selDates.has(k) ? selDates.delete(k) : selDates.add(k); if (searching()) clearTS(); else refreshView(); }
+function selectAllDates(on)  { selDates.clear(); if (on) ddKeys.forEach(k => selDates.add(k)); if (searching()) clearTS(); else refreshView(); }
+function onMonthChange()     { selDates.clear(); if (searching()) clearTS(); else refreshView(); }
 function clearDate()         { selDates.clear(); refreshView(); }
 function toggleDD(e)         { e.stopPropagation(); document.getElementById('dd').classList.toggle('open'); }
 function closeDD()           { document.getElementById('dd').classList.remove('open'); }
@@ -514,7 +628,7 @@ function renderRows(tasks) {
 function refreshView() {
   const scopedAll = allTasks.filter(inDateScope);                  // all EAs, date-scoped
   const eaTasks   = allTasks.filter(t => t.ea === currentEA);
-  const scoped    = scopedAll.filter(t => t.ea === currentEA);
+  const scoped    = scopedAll.filter(t => t.ea === currentEA && matchesSearch(t));
   const filtered  = statusFilter === 'all' ? scoped
     : scoped.filter(t => statusFilter === 'yes' ? t.status === 'yes' : t.status !== 'yes');
 
@@ -533,7 +647,9 @@ function refreshView() {
   document.getElementById('prog-total-lbl').textContent = total + ' total';
 
   const ms = document.getElementById('month-sel');
-  document.getElementById('fsummary').textContent = selDates.size
+  document.getElementById('fsummary').textContent = searching()
+    ? 'Search: ' + scoped.length + ' task' + (scoped.length === 1 ? '' : 's') + ' (all months)'
+    : selDates.size
     ? 'Showing: ' + selDates.size + ' date' + (selDates.size > 1 ? 's' : '') + ' selected'
     : 'Showing: ' + ms.options[ms.selectedIndex].text;
 
