@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Checklist — Saraswati</title>
+<title>EA Daily Checklist — My Dream Foods</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -96,6 +96,30 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .panel-head-left{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text)}
 .count-badge{font-size:11px;background:var(--accent-lt);color:var(--accent);padding:2px 8px;border-radius:20px;font-family:var(--mono);font-weight:600}
 
+/* DATE / MONTH FILTER BAR */
+.fbar{background:var(--surface);border-radius:var(--rl);padding:.9rem 1.25rem;margin-bottom:1.25rem;box-shadow:var(--sh);display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px}
+.fgroup{display:flex;flex-direction:column;gap:5px}
+.flabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;display:flex;align-items:center;gap:5px}
+.finput{font-family:var(--font);font-size:13px;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface2);color:var(--text);min-width:170px;outline:none;transition:border-color .15s}
+.finput:focus{border-color:var(--accent);background:#fff}
+.fbtn{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:7px 12px;border-radius:var(--r);border:1px solid var(--border2);background:var(--surface);color:var(--accent);cursor:pointer;font-family:var(--font);font-weight:600;transition:all .15s}
+.fbtn:hover{background:var(--accent-lt)}
+.dd{position:relative}
+.dd-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:210px;cursor:pointer;text-align:left}
+.dd-btn i{font-size:14px;color:var(--muted)}
+.dd-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:40;width:250px;background:#fff;border:1px solid var(--border2);border-radius:var(--r);box-shadow:0 10px 30px rgba(30,27,75,.18);overflow:hidden}
+.dd.open .dd-panel{display:block}
+.dd-list{max-height:280px;overflow-y:auto;padding:4px 0}
+.dd-row{display:flex;align-items:center;gap:10px;padding:7px 12px;font-size:13px;cursor:pointer;user-select:none}
+.dd-row:hover{background:var(--accent-lt)}
+.dd-row input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
+.dd-row .cnt{margin-left:auto;font-size:10px;font-family:var(--mono);background:var(--surface3);color:var(--muted);padding:1px 7px;border-radius:10px}
+.dd-all{border-bottom:1px solid var(--border);font-weight:600;background:var(--surface2)}
+.dd-foot{display:flex;justify-content:flex-end;gap:8px;padding:8px 10px;border-top:1px solid var(--border);background:var(--surface2)}
+.dd-empty{padding:14px;font-size:12px;color:var(--muted);text-align:center}
+.fsummary{margin-left:auto;font-size:12px;color:var(--muted);font-family:var(--mono);align-self:center}
+@media(max-width:620px){.fsummary{margin-left:0;width:100%}}
+
 /* FILTERS */
 .filters{display:flex;gap:6px}
 .filter-btn{font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--border2);background:var(--surface);color:var(--muted);cursor:pointer;font-family:var(--font);font-weight:500;transition:all .15s}
@@ -111,8 +135,8 @@ tr.data-row:hover td{background:var(--surface2)}
 tr.data-row{-webkit-animation:fadeIn .3s ease both;animation:fadeIn .3s ease both}
 @keyframes fadeIn{from{opacity:0;-webkit-transform:translateY(5px);transform:translateY(5px)}to{opacity:1;-webkit-transform:none;transform:none}}
 .id-cell{font-family:var(--mono);font-size:11px;color:var(--accent);background:var(--accent-lt);padding:3px 8px;border-radius:6px;display:inline-block;font-weight:600}
-.task-name{font-weight:500;color:var(--text)}
-.date-cell{font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--surface3);padding:3px 8px;border-radius:6px;display:inline-block}
+.task-name{font-weight:500;color:var(--text);white-space:pre-line}
+.date-cell{white-space:nowrap;font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--surface3);padding:3px 8px;border-radius:6px;display:inline-block}
 
 /* BADGES */
 .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;white-space:nowrap}
@@ -141,23 +165,89 @@ tr.data-row{-webkit-animation:fadeIn .3s ease both;animation:fadeIn .3s ease bot
   .date-pill{display:none}
   td,th{padding:10px 12px}
 }
+
+/* ===== LAYOUT WITH AUTO-HIDE SIDEBAR ===== */
+body{padding:0}
+.main{margin-left:68px;padding:1.75rem 1.25rem;transition:margin .25s}
+.side{position:fixed;top:0;left:0;bottom:0;width:68px;background:#1e1b4b;z-index:50;overflow:hidden;transition:width .25s cubic-bezier(.4,0,.2,1),box-shadow .25s;display:flex;flex-direction:column}
+.side:hover,.side.open{width:250px;box-shadow:8px 0 30px rgba(30,27,75,.35)}
+.side-head{display:flex;align-items:center;gap:12px;padding:18px 14px 14px;color:#fff;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.08)}
+.side-logo{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.side-ttl{font-size:13px;font-weight:700;opacity:0;transition:opacity .2s}
+.side-sub{font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.08em;text-transform:uppercase}
+.side:hover .side-ttl,.side.open .side-ttl,.side:hover .ea-name,.side.open .ea-name,.side:hover .ea-meta,.side.open .ea-meta,.side:hover .side-sec,.side.open .side-sec{opacity:1}
+.side-sec{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;padding:14px 18px 6px;white-space:nowrap;opacity:0;transition:opacity .2s}
+.ea-list{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 10px 14px}
+.ea-item{display:flex;align-items:center;gap:12px;padding:8px 6px;border-radius:10px;cursor:pointer;color:rgba(255,255,255,.75);white-space:nowrap;margin-bottom:3px;transition:background .15s}
+.ea-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.ea-item.active{background:rgba(129,140,248,.22);color:#fff}
+.ea-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;position:relative}
+.ea-item.active .ea-av{box-shadow:0 0 0 2px #1e1b4b,0 0 0 4px #a5b4fc}
+.ea-dot{position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;border-radius:8px;background:#f59e0b;color:#1e1b4b;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #1e1b4b}
+.ea-txt{min-width:0}
+.ea-name{font-size:13px;font-weight:600;opacity:0;transition:opacity .2s}
+.ea-meta{font-size:10px;color:rgba(255,255,255,.5);font-family:var(--mono);opacity:0;transition:opacity .2s}
+.side-err{margin:6px 12px;font-size:10px;color:#fca5a5;white-space:normal;opacity:0}
+.side:hover .side-err,.side.open .side-err{opacity:1}
+.menu-btn{display:none}
+.live-pill{display:flex;align-items:center;gap:7px}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 0 0 rgba(52,211,153,.7);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.7)}70%{box-shadow:0 0 0 8px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+.ea-col{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap;color:#fff}
+@media(max-width:760px){
+  .main{margin-left:0}
+  .side{width:0}
+  .side.open{width:250px}
+  .menu-btn{display:inline-flex}
+}
 </style>
 </head>
 <body>
+<aside class="side" id="side">
+  <div class="side-head">
+    <div class="side-logo"><i class="ti ti-users-group"></i></div>
+    <div class="side-ttl">EA Dashboard<div class="side-sub">My Dream Foods</div></div>
+  </div>
+  <div class="ea-list" id="ea-list"></div>
+  <div class="side-err" id="side-err"></div>
+</aside>
+<main class="main">
 <div class="wrap">
-
   <div class="topbar">
     <div class="topbar-left">
+      <button class="btn menu-btn" onclick="toggleSide()"><i class="ti ti-menu-2"></i></button>
       <div class="logo-icon"><i class="ti ti-checklist"></i></div>
       <div>
-        <div class="brand">Saraswati</div>
-        <div class="title">EA Daily Checklist - Annapurna</div>
+        <div class="brand">My Dream Foods</div>
+        <div class="title" id="page-title">EA Daily Checklist</div>
       </div>
     </div>
     <div class="topbar-right">
+      <div class="date-pill live-pill"><span class="live-dot"></span><span id="live-time">Live</span></div>
       <div class="date-pill" id="today"></div>
-      <button class="btn" id="refresh-btn" onclick="loadData()"><i class="ti ti-refresh"></i>Refresh</button>
+      <button class="btn" id="refresh-btn" onclick="loadData(false)"><i class="ti ti-refresh"></i>Refresh</button>
     </div>
+  </div>
+
+  <div id="fbar" class="fbar" style="display:none">
+    <div class="fgroup">
+      <label class="flabel" for="month-sel"><i class="ti ti-calendar-month"></i>Month</label>
+      <select class="finput" id="month-sel" onchange="onMonthChange()"></select>
+    </div>
+    <div class="fgroup">
+      <span class="flabel"><i class="ti ti-calendar-event"></i>Planned Date</span>
+      <div class="dd" id="dd">
+        <button type="button" class="finput dd-btn" onclick="toggleDD(event)"><span id="dd-label">All Dates</span><i class="ti ti-chevron-down"></i></button>
+        <div class="dd-panel" onclick="event.stopPropagation()">
+          <div id="dd-body"></div>
+          <div class="dd-foot">
+            <button type="button" class="fbtn" onclick="clearDate()">Clear</button>
+            <button type="button" class="fbtn" style="background:var(--accent);color:#fff;border-color:var(--accent)" onclick="closeDD()">Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fsummary" id="fsummary"></div>
   </div>
 
   <div id="cards" class="cards" style="display:none">
@@ -217,10 +307,16 @@ tr.data-row{-webkit-animation:fadeIn .3s ease both;animation:fadeIn .3s ease bot
   </div>
 
 </div>
+</main>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbx9-mhF7-nsl6KqY1oQM0ObI1b2AgpJddwXfQbHaZnQRSAvLCHgOLTNBlCNuzbgGyKAGQ/exec";
-let allTasks = [];
+// Sheets are configured in Code.gs (SOURCES). Data comes via google.script.run.
+let SOURCES = [];
+const AUTO_REFRESH_MIN = 5;
+
+const AV_COLORS = ['#6366f1','#ec4899','#10b981','#f59e0b','#0ea5e9','#8b5cf6','#ef4444','#14b8a6'];
+let allTasks = [], eaList = [], currentEA = '', statusFilter = 'all';
+const selDates = new Set();
 
 const _now = new Date();
 const _days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -230,14 +326,224 @@ document.getElementById('today').textContent = _days[_now.getDay()] + ', ' + _no
 function findCols(headers) {
   const h = headers.map(v => String(v).toLowerCase().trim());
   return {
-    task:   h.findIndex(v => v === 'task' || (v.includes('task') && !v.includes('id') && !v.includes('complete'))),
-    status: h.findIndex(v => v.includes('status') || v.includes('complete') || v.includes('y-n') || v.includes('y/n')),
-    id:     h.findIndex(v => v.includes('id')),
-    date:    h.findIndex(v => v.includes('planned') && !v.includes('revised')),
-    revised: h.findIndex(v => v.includes('revised')),
-    link:    h.findIndex(v => v.includes('link'))
+    task:     h.findIndex(v => v === 'task' || (v.includes('task') && !v.includes('id') && !v.includes('complete'))),
+    complete: h.findIndex(v => v.includes('complete') || v.includes('y-n') || v.includes('y/n')),
+    status:   h.findIndex(v => v === 'status' || v.includes('status')),
+    id:       h.findIndex(v => v === 'task id' || (v.includes('id') && !v.includes('email'))),
+    date:     h.findIndex(v => v.includes('planned') && !v.includes('revised')),
+    revised:  h.findIndex(v => v.includes('revised')),
+    ea:       h.findIndex(v => v === 'ea name' || v === 'ea' || v === 'name'),
+    feedback: h.findIndex(v => v.includes('feedback')),
   };
 }
+
+function initials(n) { return n.split(/\s+/).map(w => w[0]).join('').slice(0,2).toUpperCase(); }
+function eaColor(n)  { const i = eaList.indexOf(n); return AV_COLORS[(i < 0 ? 0 : i) % AV_COLORS.length]; }
+function taskDate(t) { return t.dateObj || t.revisedObj; }
+
+// ---------- DATA ----------
+function processSource(json, src) {
+  const map = {};
+  for (const sheetName of Object.keys(json)) {
+    const rows = json[sheetName];
+    if (!rows || rows.length < 2) continue;
+    const c = findCols(rows[0]);
+    if (c.task === -1) continue;                         // skips the "Status" summary sheet
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const task = String(r[c.task] || '').trim();
+      if (!task || task.toLowerCase() === 'task') continue;
+      const id = c.id >= 0 ? String(r[c.id] || '').trim() : '';
+      const key = id || task;
+      if (!map[key]) map[key] = { id, task, ea:'', main:'', form:'', dateObj:null, revisedObj:null, feedback:'' };
+      const t = map[key];
+      if (c.ea >= 0 && r[c.ea]) t.ea = String(r[c.ea]).trim();
+      if (c.complete >= 0 && r[c.complete]) t.main = normalizeStatus(r[c.complete]);   // Task sheet Y/N wins
+      if (c.status   >= 0 && c.status !== c.complete && r[c.status]) t.form = normalizeStatus(r[c.status]);
+      if (c.date     >= 0 && r[c.date])    t.dateObj    = parseSheetDate(r[c.date])    || t.dateObj;
+      if (c.revised  >= 0 && r[c.revised]) t.revisedObj = parseSheetDate(r[c.revised]) || t.revisedObj;
+      if (c.feedback >= 0 && r[c.feedback]) t.feedback = String(r[c.feedback]).trim();
+    }
+  }
+  return Object.values(map).map(t => ({ ...t, ea: src.ea || src.name, status: t.main || t.form || 'pending' }));
+}
+
+function fetchAll() {
+  return new Promise((resolve, reject) =>
+    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getAllData());
+}
+
+let loading = false;
+async function loadData(silent) {
+  if (loading) return; loading = true;
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spinning');
+  if (!silent || !allTasks.length)
+    document.getElementById('content').innerHTML = `<div class="state"><div class="loader"><span></span><span></span><span></span></div></div>`;
+  const errors = [];
+  let payload = [];
+  try { payload = await fetchAll(); }
+  catch (e) { errors.push(e.message || String(e)); }
+  loading = false;
+  btn.classList.remove('spinning');
+  SOURCES = payload.map(p => ({ name: p.ea + ' Sheet', ea: p.ea }));
+  const results = payload.map(p => {
+    if (p.error) { errors.push(p.ea + ': ' + p.error); return []; }
+    return processSource(p.data, { name: p.ea + ' Sheet', ea: p.ea });
+  });
+  allTasks = results.flat();
+  eaList = SOURCES.map(s => s.ea);
+  document.getElementById('side-err').innerHTML = errors.map(esc).join('<br>');
+  document.getElementById('live-time').textContent = 'Synced ' + safeDateTime(new Date()).split(', ')[1];
+
+  if (!allTasks.length) {
+    document.getElementById('content').innerHTML = `<div class="err"><i class="ti ti-alert-triangle"></i><span>${esc(errors.join(' | ') || 'No data')}</span></div>`;
+    return;
+  }
+  if (!eaList.includes(currentEA)) currentEA = eaList[0];
+  buildMonthOptions(document.getElementById('month-sel').value);
+  ['fbar','prog-section'].forEach(id => document.getElementById(id).style.display = 'flex');
+  document.getElementById('prog-section').style.display = 'block';
+  document.getElementById('cards').style.display = 'grid';
+  document.getElementById('filters').style.display = 'flex';
+  refreshView();
+}
+
+// ---------- SIDEBAR ----------
+function renderSidebar(monthScopedAll) {
+  const pendingOf = n => monthScopedAll.filter(t => t.ea === n && t.status !== 'yes').length;
+  const totalOf   = n => monthScopedAll.filter(t => t.ea === n).length;
+  const item = (n, label, bg, icon) => {
+    const p = pendingOf(n);
+    return `<div class="ea-item${currentEA === n ? ' active' : ''}" onclick="selectEA('${esc(n)}')" title="${esc(label)}">
+      <div class="ea-av" style="background:${bg}">${icon}${p ? `<span class="ea-dot">${p}</span>` : ''}</div>
+      <div class="ea-txt"><div class="ea-name">${esc(label)}</div><div class="ea-meta">${totalOf(n)} tasks · ${p} pending</div></div>
+    </div>`;
+  };
+  document.getElementById('ea-list').innerHTML =
+    `<div class="side-sec">Executive Assistants</div>` +
+    eaList.map(n => item(n, n, eaColor(n), initials(n))).join('');
+}
+function selectEA(n) {
+  currentEA = n;
+  selDates.clear();
+  buildMonthOptions('');                           // reset to this EA's latest month
+  document.getElementById('side').classList.remove('open');
+  refreshView();
+}
+function toggleSide() { document.getElementById('side').classList.toggle('open'); }
+
+// ---------- FILTERS ----------
+function inDateScope(t) {
+  const month = document.getElementById('month-sel').value;
+  const d = taskDate(t);
+  if (selDates.size) return d && selDates.has(ymdKey(d));
+  if (month === 'all')  return true;
+  if (month === 'none') return !d;
+  return d && ymKey(d) === month;
+}
+
+function buildMonthOptions(keep) {
+  const keys = [...new Set(allTasks.filter(t => t.ea === currentEA).map(taskDate).filter(Boolean).map(ymKey))].sort().reverse();
+  const ms = document.getElementById('month-sel');
+  ms.innerHTML = keys.map(k => `<option value="${k}">${ymLabel(k)}</option>`).join('')
+    + `<option value="all">All Months</option>`
+    + (allTasks.some(t => !taskDate(t)) ? `<option value="none">No Planned Date</option>` : '');
+  ms.value = (keep && [...ms.options].some(o => o.value === keep)) ? keep : (keys[0] || 'all');
+}
+
+let ddKeys = [];                                    // dates currently listed in the dropdown
+
+function fmtKey(k) { const d = parseSheetDate(k); return _days[d.getDay()] + ', ' + d.getDate() + ' ' + _months[d.getMonth()] + ' ' + d.getFullYear(); }
+
+function renderDateDropdown(eaTasks) {
+  const month = document.getElementById('month-sel').value;
+  const counts = {};
+  eaTasks.forEach(t => { const d = taskDate(t); if (d) { const k = ymdKey(d); counts[k] = (counts[k]||0) + 1; } });
+  ddKeys = Object.keys(counts).filter(k => month === 'all' || k.slice(0,7) === month).sort().reverse();
+  const body = document.getElementById('dd-body');
+  if (!ddKeys.length) { body.innerHTML = `<div class="dd-empty">No planned dates in this month</div>`; }
+  else {
+    const allOn = ddKeys.every(k => selDates.has(k));
+    body.innerHTML = `<label class="dd-row dd-all"><input type="checkbox" ${allOn ? 'checked' : ''} onchange="selectAllDates(this.checked)">Select All<span class="cnt">${ddKeys.length}</span></label>
+      <div class="dd-list">${ddKeys.map(k => `<label class="dd-row"><input type="checkbox" ${selDates.has(k) ? 'checked' : ''} onchange="toggleDate('${k}')">${fmtKey(k)}<span class="cnt">${counts[k]}</span></label>`).join('')}</div>`;
+  }
+  const n = selDates.size;
+  document.getElementById('dd-label').textContent =
+    !n ? 'All Dates' : (ddKeys.length && ddKeys.every(k => selDates.has(k)) && n === ddKeys.length) ? 'All Dates Selected'
+    : n === 1 ? fmtKey([...selDates][0]) : n + ' dates selected';
+}
+
+function toggleDate(k)       { selDates.has(k) ? selDates.delete(k) : selDates.add(k); refreshView(); }
+function selectAllDates(on)  { selDates.clear(); if (on) ddKeys.forEach(k => selDates.add(k)); refreshView(); }
+function onMonthChange()     { selDates.clear(); refreshView(); }
+function clearDate()         { selDates.clear(); refreshView(); }
+function toggleDD(e)         { e.stopPropagation(); document.getElementById('dd').classList.toggle('open'); }
+function closeDD()           { document.getElementById('dd').classList.remove('open'); }
+document.addEventListener('click', closeDD);
+
+function applyFilter(f, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active'); statusFilter = f; refreshView();
+}
+
+// ---------- RENDER ----------
+function renderRows(tasks) {
+  if (!tasks.length) return `<div class="empty-state"><div class="empty-icon"><i class="ti ti-mood-empty"></i></div><div class="empty-msg">No tasks match this filter</div></div>`;
+    return `<table>
+    <thead><tr>
+      <th style="width:60px">ID</th>
+            <th>Task</th>
+      <th style="width:120px">Planned Date</th>
+      <th style="width:130px">Revised Date</th>
+      <th style="width:110px">Status</th>
+    </tr></thead>
+    <tbody>
+      ${tasks.map((t,i) => `<tr class="data-row" style="animation-delay:${Math.min(i,25)*40}ms">
+        <td><span class="id-cell">${esc(t.id || i+1)}</span></td>
+        <td><span class="task-name">${esc(t.task)}</span>${t.feedback ? `<div style="font-size:11px;color:var(--muted);margin-top:3px"><i class="ti ti-message"></i> ${esc(t.feedback)}</div>` : ''}</td>
+        <td><span class="date-cell">${t.dateObj ? safeDate(t.dateObj) : '—'}</span></td>
+        <td><span class="date-cell">${t.revisedObj ? safeDate(t.revisedObj) : '—'}</span></td>
+        <td>${badgeHTML(t.status)}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  <div class="footer">Updated: ${safeDateTime(new Date())}</div>`;
+}
+
+function refreshView() {
+  const scopedAll = allTasks.filter(inDateScope);                  // all EAs, date-scoped
+  const eaTasks   = allTasks.filter(t => t.ea === currentEA);
+  const scoped    = scopedAll.filter(t => t.ea === currentEA);
+  const filtered  = statusFilter === 'all' ? scoped
+    : scoped.filter(t => statusFilter === 'yes' ? t.status === 'yes' : t.status !== 'yes');
+
+  const total = scoped.length, done = scoped.filter(t => t.status === 'yes').length;
+  const pend = total - done, pct = total ? Math.round(done / total * 100) : 0;
+
+  document.getElementById('page-title').textContent = 'EA Daily Checklist - ' + currentEA;
+  document.getElementById('task-count').textContent = filtered.length;
+  animateCount(document.getElementById('c-total'), total);
+  animateCount(document.getElementById('c-done'),  done);
+  animateCount(document.getElementById('c-pend'),  pend);
+  animateCount(document.getElementById('c-pct'),   pct + '%');
+  animateCount(document.getElementById('prog-pct'), pct + '%');
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-done-lbl').textContent = done + ' completed';
+  document.getElementById('prog-total-lbl').textContent = total + ' total';
+
+  const ms = document.getElementById('month-sel');
+  document.getElementById('fsummary').textContent = selDates.size
+    ? 'Showing: ' + selDates.size + ' date' + (selDates.size > 1 ? 's' : '') + ' selected'
+    : 'Showing: ' + ms.options[ms.selectedIndex].text;
+
+  const mVal = document.getElementById('month-sel').value;     // sidebar counts = month only (not date picks)
+  renderSidebar(allTasks.filter(t => { const d = taskDate(t); return mVal === 'all' || (mVal === 'none' ? !d : d && ymKey(d) === mVal); }));
+  renderDateDropdown(eaTasks);
+  const sorted = filtered.slice().sort((a,b) => ((taskDate(a)||0) - (taskDate(b)||0)) || a.ea.localeCompare(b.ea) || (Number(a.id)||0) - (Number(b.id)||0));
+  document.getElementById('content').innerHTML = renderRows(sorted);
+}
+
 
 function safeDate(d) {
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -252,18 +558,26 @@ function safeDateTime(d) {
   return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + ', ' + h + ':' + m + ' ' + ampm;
 }
 
-function formatDate(val) {
-  if (!val && val !== 0) return '—';
+// ---- DATE HELPERS (sheet uses DD/MM/YYYY or DD-MM-YYYY) ----
+function parseSheetDate(val) {
+  if (val === null || val === undefined) return null;
   const s = String(val).trim();
-  if (!s || s === '0') return '—';
-  if (/^\d{4,6}$/.test(s)) {
+  if (!s || s === '0') return null;
+  let m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);          // DD/MM/YYYY
+  if (m) { const d = new Date(+m[3], +m[2]-1, +m[1]); return isNaN(d) ? null : d; }
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);                            // YYYY-MM-DD
+  if (m) { const d = new Date(+m[1], +m[2]-1, +m[3]); return isNaN(d) ? null : d; }
+  if (/^\d{4,6}$/.test(s)) {                                                 // Sheets serial
     const d = new Date((Number(s) - 25569) * 86400 * 1000);
-    if (!isNaN(d)) return safeDate(d);
+    return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
   }
   const d = new Date(s);
-  if (!isNaN(d)) return safeDate(d);
-  return s;
+  return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
+function ymKey(d)  { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+function ymdKey(d) { return ymKey(d) + '-' + String(d.getDate()).padStart(2,'0'); }
+function ymLabel(k){ const [y,m] = k.split('-'); return _months[+m-1] + ' ' + y; }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function extractLink(val) {
   if (!val) return '';
@@ -274,7 +588,7 @@ function extractLink(val) {
 }
 
 function normalizeStatus(val) {
-  const v = String(val).toLowerCase().trim();
+  const v = String(val).toLowerCase().trim().split('\n').pop().trim();
   if (v === 'yes' || v === 'y') return 'yes';
   if (v === 'no'  || v === 'n') return 'no';
   return v || 'pending';
@@ -283,7 +597,7 @@ function normalizeStatus(val) {
 function badgeHTML(s) {
   if (s === 'yes') return `<span class="badge y"><span class="dot-indicator"></span>Done</span>`;
   if (s === 'no')  return `<span class="badge n"><span class="dot-indicator"></span>Not done</span>`;
-  return `<span class="badge p"><span class="dot-indicator"></span>${s || 'Pending'}</span>`;
+  return `<span class="badge p"><span class="dot-indicator"></span>${esc(!s || s === 'pending' ? 'Pending' : s)}</span>`;
 }
 
 function animateCount(el, target) {
@@ -299,102 +613,10 @@ function animateCount(el, target) {
   requestAnimationFrame(step);
 }
 
-function renderRows(tasks) {
-  if (!tasks.length) return `<div class="empty-state"><div class="empty-icon"><i class="ti ti-mood-empty"></i></div><div class="empty-msg">No tasks match this filter</div></div>`;
-  return `<table>
-    <thead><tr>
-      <th style="width:60px">ID</th>
-      <th>Task</th>
-      <th style="width:120px">Planned Date</th>
-      <th style="width:130px">Revised Date</th>
-      <th style="width:120px">Status</th>
-    </tr></thead>
-    <tbody>
-      ${tasks.map((t,i) => `<tr class="data-row" style="animation-delay:${i*40}ms">
-        <td><span class="id-cell">${t.id || i+1}</span></td>
-        <td><span class="task-name">${t.task}</span></td>
-        <td><span class="date-cell">${t.date || '—'}</span></td>
-        <td><span class="date-cell">${t.revised || '—'}</span></td>
-        <td>${badgeHTML(t.status)}</td>
-      </tr>`).join('')}
-    </tbody>
-  </table>
-  <div class="footer">Updated: ${safeDateTime(new Date())}</div>`;
-}
 
-function applyFilter(filter, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const filtered = filter === 'all' ? allTasks : allTasks.filter(t => t.status === filter || (filter === 'no' && t.status !== 'yes'));
-  document.getElementById('content').innerHTML = renderRows(filtered);
-}
-
-function processData(json) {
-  const taskMap = {};
-  for (const sheetName of Object.keys(json)) {
-    const rows = json[sheetName];
-    if (!rows || rows.length < 2) continue;
-    const cols = findCols(rows[0]);
-    if (cols.task === -1) continue;
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      const task = String(row[cols.task] || '').trim();
-      if (!task || task.toLowerCase() === 'task') continue;
-      const id = cols.id >= 0 ? String(row[cols.id] || '').trim() : String(i);
-      const key = id || task;
-      if (!taskMap[key]) taskMap[key] = { id, task, status:'', date:'', revised:'' };
-      const t = taskMap[key];
-      if (cols.status >= 0 && row[cols.status])  t.status  = normalizeStatus(row[cols.status]);
-      if (cols.date   >= 0 && row[cols.date])    t.date    = formatDate(row[cols.date]);
-      if (cols.revised>= 0 && row[cols.revised]) t.revised = formatDate(row[cols.revised]);
-    }
-  }
-  const tasks = Object.values(taskMap);
-  allTasks = tasks;
-
-  const total = tasks.length;
-  const done  = tasks.filter(t => t.status === 'yes').length;
-  const pend  = total - done;
-  const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
-
-  document.getElementById('cards').style.display = 'grid';
-  document.getElementById('prog-section').style.display = 'block';
-  document.getElementById('filters').style.display = 'flex';
-  document.getElementById('task-count').textContent = total;
-
-  setTimeout(() => {
-    animateCount(document.getElementById('c-total'), total);
-    animateCount(document.getElementById('c-done'),  done);
-    animateCount(document.getElementById('c-pend'),  pend);
-    animateCount(document.getElementById('c-pct'),   pct + '%');
-    animateCount(document.getElementById('prog-pct'), pct + '%');
-    document.getElementById('prog-fill').style.width = pct + '%';
-    document.getElementById('prog-done-lbl').textContent = done + ' completed';
-    document.getElementById('prog-total-lbl').textContent = total + ' total';
-  }, 100);
-
-  document.getElementById('content').innerHTML = renderRows(tasks);
-}
-
-async function loadData() {
-  const btn = document.getElementById('refresh-btn');
-  btn.classList.add('spinning');
-  document.getElementById('filters').style.display = 'none';
-  document.getElementById('content').innerHTML = `<div class="state"><div class="loader"><span></span><span></span><span></span></div></div>`;
-  try {
-    const res = await fetch(GAS_URL, { method: 'GET', mode: 'cors', redirect: 'follow', cache: 'no-cache' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const text = await res.text();
-    const json = JSON.parse(text);
-    processData(json);
-  } catch(e) {
-    document.getElementById('content').innerHTML = `<div class="err"><i class="ti ti-alert-triangle" style="flex-shrink:0;font-size:16px;margin-top:1px"></i><span>${e.message}. Ensure Apps Script is deployed with <strong>Anyone</strong> access.</span></div>`;
-  } finally {
-    btn.classList.remove('spinning');
-  }
-}
-
-loadData();
+loadData(false);
+setInterval(() => { if (!document.hidden) loadData(true); }, AUTO_REFRESH_MIN * 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadData(true); });
 </script>
 </body>
 </html>
